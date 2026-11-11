@@ -108,6 +108,8 @@ pub struct MyCraftState {
     pub auto_start: bool,
     /// Closing the window hides it to the system tray; tray or Menu → Exit really quits.
     pub close_to_tray: bool,
+    /// Send OS notifications for Quick App, AI completion, service events.
+    pub notifications: bool,
     pub new_app_name: String,
     pub selected_template: usize,
     pub config_modal: ConfigModal,
@@ -191,6 +193,7 @@ impl Default for MyCraftState {
             domain: cfg.domain.clone(),
             auto_start: crate::settings::autostart_enabled(),
             close_to_tray: cfg.close_to_tray,
+            notifications: cfg.notifications,
             new_app_name: "mycraft".into(),
             selected_template: 0,
             config_modal: ConfigModal {
@@ -366,6 +369,9 @@ impl MyCraftState {
                 self.set_running(idx, true);
             }
         }
+        if self.all_running {
+            crate::notify::send("myCraft", "All services has successfully started");
+        }
     }
 
     pub fn stop_all(&mut self) {
@@ -520,6 +526,12 @@ impl MyCraftState {
                 crate::quickapp::Note::Log(level, msg) => self.log(level, &msg),
                 crate::quickapp::Note::Done(summary) => {
                     self.quick_busy = false;
+                    let title = if summary.starts_with("Failed:") {
+                        "Quick App Failed"
+                    } else {
+                        "Quick App Finished"
+                    };
+                    crate::notify::send(title, &summary);
                     self.quick_create_status = Some(summary);
                 }
                 crate::quickapp::Note::Refresh => {
@@ -551,6 +563,7 @@ impl MyCraftState {
             auto_vhosts: self.auto_vhosts,
             domain: self.domain.clone(),
             close_to_tray: self.close_to_tray,
+            notifications: self.notifications,
             db_tool: self.db_tool_preference.clone(),
             terminal: self.terminal_preference.clone(),
         };

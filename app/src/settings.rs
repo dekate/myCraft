@@ -20,6 +20,7 @@ pub struct Settings {
     #[serde(alias = "hostname")]
     pub domain: String,
     pub close_to_tray: bool,
+    pub notifications: bool,
     pub db_tool: String,
     pub terminal: String,
 }
@@ -36,6 +37,7 @@ impl Default for Settings {
             auto_vhosts: true,
             domain: "{name}.go".into(),
             close_to_tray: true,
+            notifications: true,
             db_tool: "HeidiSQL".into(),
             terminal: "Cmder".into(),
         }

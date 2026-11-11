@@ -2046,6 +2046,10 @@ impl MyCraftApp {
             ui.label(RichText::new("Close Button:").strong());
             ui.checkbox(&mut self.state.close_to_tray, "Hide to system tray (quit from tray → Exit)");
             ui.end_row();
+
+            ui.label(RichText::new("Notifications:").strong());
+            ui.checkbox(&mut self.state.notifications, "Show OS notifications (Quick App, AI, services)");
+            ui.end_row();
         });
 
         ui.add_space(10.0);

@@ -995,14 +995,29 @@ impl AiChat {
             let Some(p) = &mut self.pending else { break };
             match p.rx.try_recv() {
                 Ok(Event::Note(text)) => self.messages.push(ChatMsg { role: Role::Assistant, text, meta: "working…".into(), time: MyCraftState::current_time_str() }),
-                Ok(Event::Ask(command, tx)) => p.approval = Some((command, tx)),
+                Ok(Event::Ask(command, tx)) => {
+                    crate::notify::send("myCraft AI", &format!("Waiting for approval to run: {}", command));
+                    p.approval = Some((command, tx));
+                }
                 Ok(Event::Ran { command, output }) => {
                     logs.push((true, format!("AI ran: {}", command)));
                     self.messages.push(ChatMsg { role: Role::Tool, text: output, meta: command, time: MyCraftState::current_time_str() });
                 }
                 Ok(Event::Done(outcome)) => {
+                    let has_reply = outcome.reply.is_some();
+                    let reply_preview = outcome.reply.as_deref().and_then(|t| {
+                        t.lines().find(|l| !l.trim().is_empty())
+                    }).map(|l| l.chars().take(90).collect::<String>());
+
                     let tier_note = self.pending.take().map(|p| p.tier_note).unwrap_or_default();
                     logs.push(self.finish(outcome, &tier_note));
+
+                    let body = match reply_preview {
+                        Some(preview) => format!("{preview}…\nAI is ready for your next prompt."),
+                        None if has_reply => "AI finished responding. Ready for your next prompt.".into(),
+                        None => "AI request completed. Ready for your next prompt.".into(),
+                    };
+                    crate::notify::send("myCraft AI", &body);
                     break;
                 }
                 Err(TryRecvError::Disconnected) => {

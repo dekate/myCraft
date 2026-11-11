@@ -5,6 +5,7 @@ mod ai;
 mod ai_tab;
 mod app;
 mod mysql;
+pub mod notify;
 mod packages;
 mod php_update;
 mod quickapp;

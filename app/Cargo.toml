@@ -18,6 +18,7 @@ raw-window-handle = "0.6"
 # serves it. Both on ring, which ureq already pulls in.
 rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12", "logging"] }
 rcgen = { version = "0.13", default-features = false, features = ["ring", "pem"] }
+notify-rust = "4"
 
 [target.'cfg(windows)'.dependencies]
 tray-icon = "0.26"
