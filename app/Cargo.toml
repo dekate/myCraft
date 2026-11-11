@@ -1,0 +1,50 @@
+[package]
+name = "mycraft"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+eframe = "0.30"
+image = { version = "0.25", default-features = false, features = ["png"] }
+webbrowser = "1.2"
+ureq = { version = "2.12", features = ["json"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# Markdown for AI replies. No default features: no image loading or fetching,
+# so rendering never touches the network. Syntax themes are bundled.
+egui_commonmark = { version = "0.19", default-features = false, features = ["pulldown_cmark", "better_syntax_highlighting"] }
+raw-window-handle = "0.6"
+# HTTPS for *.go: a local CA (rcgen) signs one cert for all projects; rustls
+# serves it. Both on ring, which ureq already pulls in.
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12", "logging"] }
+rcgen = { version = "0.13", default-features = false, features = ["ring", "pem"] }
+
+[target.'cfg(windows)'.dependencies]
+tray-icon = "0.26"
+windows-sys = { version = "0.59", features = [
+    "Win32_Foundation",
+    "Win32_Security",
+    "Win32_Security_Cryptography",
+    "Win32_System_Threading",
+    "Win32_UI_WindowsAndMessaging",
+] }
+
+[patch.crates-io]
+# Real bold face for markdown; see vendor/egui_commonmark_backend/MYCRAFT_PATCH.md
+egui_commonmark_backend = { path = "vendor/egui_commonmark_backend" }
+
+# Debug: keep full debug info for our own code, none for dependencies.
+# On the GNU toolchain debug info is embedded in the exe, so this is most of its size.
+[profile.dev.package."*"]
+debug = false
+
+# Release: whole-program optimisation and no symbols, for a smaller exe.
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
+opt-level = "s"
+
+[build-dependencies]
+image = { version = "0.25", default-features = false, features = ["png", "ico"] }
+winresource = "0.1"
