@@ -1,0 +1,11 @@
+# Rust build output, in app/ or anywhere else cargo gets run
+target/
+*.log
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
+
+# AI provider settings and API keys. The app saves them to %APPDATA%\myCraft\ai.json,
+# outside the repo; this keeps a copied or exported one from being committed.
+ai.json
