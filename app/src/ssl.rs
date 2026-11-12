@@ -53,7 +53,7 @@ pub fn ensure_ca() -> Result<PathBuf, String> {
     ca().map(|_| ca_cert_path())
 }
 
-/// Hostnames the server certificate covers: localhost plus `<project><domain>`.
+/// Hostnames the server certificate covers: localhost plus `<project><domain>` and wildcard subdomains.
 pub fn host_names(www_root: &Path) -> Vec<String> {
     let cfg = crate::settings::current();
     let mut names: Vec<String> = std::fs::read_dir(www_root)
@@ -61,12 +61,17 @@ pub fn host_names(www_root: &Path) -> Vec<String> {
             rd.flatten()
                 .filter(|e| e.path().is_dir())
                 .map(|e| e.file_name().to_string_lossy().to_ascii_lowercase())
-                .filter(|n| !n.starts_with(['.', '_']) && n.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_'))
+                .filter(|n| !n.starts_with(['.', '_']) && n.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_' || c == '.'))
                 .flat_map(|n| {
-                    let mut list = vec![cfg.project_hostname(&n)];
+                    let mut list = Vec::new();
+                    let hostname = cfg.project_hostname(&n);
+                    list.push(hostname.clone());
+                    list.push(format!("*.{hostname}"));
+
                     let go_name = format!("{n}.go");
                     if !list.contains(&go_name) {
-                        list.push(go_name);
+                        list.push(go_name.clone());
+                        list.push(format!("*.{go_name}"));
                     }
                     list
                 })
@@ -147,7 +152,7 @@ mod tests {
 
     #[test]
     fn issues_a_cert_rustls_accepts() {
-        let names = vec!["localhost".to_string(), "demo.go".to_string()];
+        let names = vec!["localhost".to_string(), "demo.go".to_string(), "*.demo.go".to_string(), "api.dekacare-v2.test".to_string()];
         // Uses a scratch root so the real etc\ssl is untouched.
         let (ca_cert, ca_key) = {
             let key = KeyPair::generate().unwrap();
@@ -166,5 +171,22 @@ mod tests {
                 PrivateKeyDer::Pkcs8(PrivatePkcs8KeyDer::from(key.serialize_der())),
             )
             .unwrap();
+    }
+
+    #[test]
+    fn host_names_supports_dots_and_wildcards() {
+        let tmp = std::env::temp_dir().join(format!("mycraft-ssl-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&tmp);
+        std::fs::create_dir_all(tmp.join("dekacare-v2")).unwrap();
+        std::fs::create_dir_all(tmp.join("api.dekacare-v2")).unwrap();
+
+        let names = host_names(&tmp);
+        assert!(names.contains(&"localhost".to_string()));
+        assert!(names.contains(&"dekacare-v2.go".to_string()));
+        assert!(names.contains(&"*.dekacare-v2.go".to_string()));
+        assert!(names.contains(&"api.dekacare-v2.go".to_string()));
+        assert!(names.contains(&"*.api.dekacare-v2.go".to_string()));
+
+        let _ = std::fs::remove_dir_all(&tmp);
     }
 }
