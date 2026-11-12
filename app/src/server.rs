@@ -422,7 +422,8 @@ fn handle_client(stream: &mut dyn Conn, www_root: &str, tunnel_manager: &crate::
     }
 
     let method = parts[0];
-    if method != "GET" && method != "POST" && method != "HEAD" {
+    // PUT/PATCH/DELETE back REST APIs; OPTIONS is the browser's CORS preflight.
+    if !matches!(method, "GET" | "POST" | "HEAD" | "PUT" | "PATCH" | "DELETE" | "OPTIONS") {
         let response = "HTTP/1.1 405 Method Not Allowed\r\nContent-Length: 0\r\n\r\n";
         let _ = stream.write_all(response.as_bytes());
         return;
@@ -505,6 +506,14 @@ fn handle_client(stream: &mut dyn Conn, www_root: &str, tunnel_manager: &crate::
             if vhost_dir.is_dir() {
                 crate::tunnel::serve_project(stream, &vhost_dir, vhost_name, &request_str, &buffer[..bytes_read]);
                 return;
+            }
+            // Fallback for wildcard subdomains (e.g. sub.project -> project)
+            if let Some((_, base_project)) = vhost_name.split_once('.') {
+                let base_dir = root.join(base_project);
+                if base_dir.is_dir() {
+                    crate::tunnel::serve_project(stream, &base_dir, base_project, &request_str, &buffer[..bytes_read]);
+                    return;
+                }
             }
         }
     }
