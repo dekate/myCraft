@@ -31,6 +31,7 @@
   <a href="#downloads">Downloads</a> ·
   <a href="#get-started">Get started</a> ·
   <a href="#project-layout">Project layout</a> ·
+  <a href="#code-signing-policy">Code signing</a> ·
   <a href="#license-and-credits">License</a>
 </p>
 
@@ -95,7 +96,7 @@ The [latest release](https://github.com/dekate/myCraft/releases/latest) has ever
 
 A single portable exe: put it in the folder you want as your myCraft root (for example `C:\myCraft`) and run it. It creates `www\`, `bin\`, `conf\` and `etc\` next to itself. Windows 10 or 11.
 
-The exe is not code-signed, so SmartScreen may warn on first launch: choose **More info → Run anyway**. To check a download, compare `Get-FileHash <file> -Algorithm SHA256` with `SHA256SUMS.txt`.
+Windows builds are being set up for code signing through the SignPath Foundation (see [Code signing policy](#code-signing-policy)). Until a release is signed, SmartScreen may warn on first launch: choose **More info → Run anyway**. To check a download, compare `Get-FileHash <file> -Algorithm SHA256` with `SHA256SUMS.txt`.
 
 ### macOS
 
@@ -159,6 +160,23 @@ app/
   scripts/release-notes.sh    commit list and new contributors for the notes
 docs/             README screenshots
 ```
+
+## Code signing policy
+
+Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by [SignPath Foundation](https://signpath.org).
+
+Only the Windows `.exe` files attached to [GitHub releases](https://github.com/dekate/myCraft/releases) are signed. They are built from this repository's source by the [Release workflow](.github/workflows/release.yml) on GitHub-hosted runners; nothing built elsewhere is signed.
+
+Team roles:
+
+- Committers and reviewers: [dekate](https://github.com/dekate)
+- Approvers: [dekate](https://github.com/dekate)
+
+Every signing request is approved manually by an approver.
+
+### Privacy
+
+This program will not transfer any information to other networked systems unless specifically requested by the user or the person installing or operating it. myCraft connects to the internet only when you ask it to: installing or updating packages (PHP, Node.js, MariaDB, Composer, HeidiSQL, Redis) from their official sources, creating Quick App projects, opening a public tunnel for a project, or sending AI chat messages to the providers you add with your own API keys. Those services' own privacy policies apply to what you send them.
 
 ## License and credits
 
