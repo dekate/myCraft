@@ -1315,6 +1315,8 @@ mod tests {
     #[test]
     fn key_encryption_roundtrip() {
         let blob = secret::protect("sk-test-123").unwrap();
+        // DPAPI on Windows only; elsewhere keys are stored as plain text (see README).
+        #[cfg(windows)]
         assert_ne!(blob, b"sk-test-123");
         assert_eq!(secret::unprotect(&blob).as_deref(), Some("sk-test-123"));
     }
